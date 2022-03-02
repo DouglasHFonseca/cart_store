@@ -8,6 +8,7 @@ import {
 import {useCart} from '../../hooks/useCart';
 import {formatPrice} from '../../util/format';
 import {Container, ProductTable, Total} from './styles';
+import {toast} from "react-toastify";
 
 interface Product {
     id: number;
@@ -33,11 +34,21 @@ const Cart = (): JSX.Element => {
         )
 
     async function handleProductIncrement(product: Product) {
-        await updateProductAmount({productId: product.id, amount: 1})
+        try {
+            await updateProductAmount({productId: product.id, amount: 1})
+
+        } catch {
+            toast.error('Erro no incremento do produto');
+        }
     }
 
     async function handleProductDecrement(product: Product) {
-        await decrementProduct(product.id)
+        try {
+            await decrementProduct(product.id)
+
+        } catch {
+            toast.error('Erro no descremento do produto');
+        }
     }
 
     function handleRemoveProduct(productId: number) {
@@ -58,7 +69,7 @@ const Cart = (): JSX.Element => {
                 </thead>
                 <tbody>
                 {cartFormatted.map((product) =>
-                    <tr data-testid="product">
+                    <tr data-testid="product" key={product.id}>
                         <td>
                             <img src={product.image}
                                  alt={product.title}/>

@@ -51,12 +51,12 @@ describe('Cart Page', () => {
     fireEvent.click(decrementSecondProduct);
 
     expect(mockedUpdateProductAmount).toHaveBeenCalledWith({
-      amount: 2,
+      amount: 1,
       productId: 1,
     });
     expect(mockedUpdateProductAmount).toHaveBeenCalledWith({
       amount: 1,
-      productId: 2,
+      productId: 1,
     });
 
     mockedUseCartHook.mockReturnValueOnce({
