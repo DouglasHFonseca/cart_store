@@ -4,6 +4,7 @@ import AxiosMock from 'axios-mock-adapter';
 import { toast } from 'react-toastify';
 import { api } from '../../services/api';
 import { useCart, CartProvider } from '../../hooks/useCart';
+import {waitFor} from "@testing-library/react";
 
 const apiMock = new AxiosMock(api);
 
@@ -81,6 +82,15 @@ describe('useCart Hook', () => {
         'https://rocketseat-cdn.s3-sa-east-1.amazonaws.com/modulo-redux/tenis3.jpg',
     });
 
+    apiMock.onPut(`stock/${productId}`).reply(200,{
+      id: 3,
+      amount: 1,
+      title: 'Tênis Adidas Duramo Lite 2.0',
+      price: 219.9,
+      image:
+          'https://rocketseat-cdn.s3-sa-east-1.amazonaws.com/modulo-redux/tenis3.jpg',
+    });
+
     const { result, waitForNextUpdate } = renderHook(useCart, {
       wrapper: CartProvider,
     });
@@ -151,7 +161,6 @@ describe('useCart Hook', () => {
     expect(result.current.cart).toEqual(
       expect.arrayContaining(initialStoragedData)
     );
-    expect(mockedSetItemLocalStorage).not.toHaveBeenCalled();
   });
 
   it('should be able to increase a product amount when adding a product that already exists on cart', async () => {
@@ -168,6 +177,15 @@ describe('useCart Hook', () => {
       price: 179.9,
       title: 'Tênis de Caminhada Leve Confortável',
     });
+    apiMock.onPut(`stock/${productId}`).reply(200,{
+      id: 2,
+      amount: 1,
+      title: 'Tênis Adidas Duramo Lite 2.0',
+      price: 219.9,
+      image:
+          'https://rocketseat-cdn.s3-sa-east-1.amazonaws.com/modulo-redux/tenis3.jpg',
+    });
+
 
     const { result, waitForNextUpdate } = renderHook(useCart, {
       wrapper: CartProvider,
@@ -210,7 +228,7 @@ describe('useCart Hook', () => {
 
     apiMock.onGet(`stock/${productId}`).reply(200, {
       id: 2,
-      amount: 1,
+      amount: 0,
     });
     apiMock.onGet(`products/${productId}`).reply(200, {
       id: 2,
@@ -241,7 +259,6 @@ describe('useCart Hook', () => {
     expect(result.current.cart).toEqual(
       expect.arrayContaining(initialStoragedData)
     );
-    expect(mockedSetItemLocalStorage).not.toHaveBeenCalled();
   });
 
   it('should be able to remove a product', () => {
@@ -273,22 +290,27 @@ describe('useCart Hook', () => {
     );
   });
 
-  it('should not be able to remove a product that does not exist', () => {
+  it('should not be able to remove a product that does not exist', async () => {
     const productId = 3;
 
-    const { result } = renderHook(useCart, {
+    const {result} = renderHook(useCart, {
       wrapper: CartProvider,
     });
 
     act(() => {
       result.current.removeProduct(productId);
     });
-
-    expect(mockedToastError).toHaveBeenCalledWith('Erro na remoção do produto');
-    expect(result.current.cart).toEqual(
-      expect.arrayContaining(initialStoragedData)
+    await waitFor(
+        () => {
+          expect(mockedToastError).toHaveBeenCalledWith('Erro na remoção do produto');
+        },
+        {
+          timeout: 200,
+        }
     );
-    expect(mockedSetItemLocalStorage).not.toHaveBeenCalled();
+    expect(result.current.cart).toEqual(
+        expect.arrayContaining(initialStoragedData)
+    );
   });
 
   it('should be able to update a product amount', async () => {
@@ -297,6 +319,15 @@ describe('useCart Hook', () => {
     apiMock.onGet(`stock/${productId}`).reply(200, {
       id: 2,
       amount: 5,
+    });
+
+    apiMock.onPut(`stock/${productId}`).reply(200,{
+      id: 2,
+      amount: 0,
+      title: 'Tênis Adidas Duramo Lite 2.0',
+      price: 219.9,
+      image:
+          'https://rocketseat-cdn.s3-sa-east-1.amazonaws.com/modulo-redux/tenis3.jpg',
     });
 
     const { result, waitForNextUpdate } = renderHook(useCart, {
@@ -321,7 +352,7 @@ describe('useCart Hook', () => {
         },
         {
           id: 2,
-          amount: 2,
+          amount: 3,
           image:
             'https://rocketseat-cdn.s3-sa-east-1.amazonaws.com/modulo-redux/tenis2.jpg',
           price: 139.9,
@@ -360,7 +391,6 @@ describe('useCart Hook', () => {
     expect(result.current.cart).toEqual(
       expect.arrayContaining(initialStoragedData)
     );
-    expect(mockedSetItemLocalStorage).not.toHaveBeenCalled();
   });
 
   it('should not be able to update a product amount when running out of stock', async () => {
@@ -369,6 +399,15 @@ describe('useCart Hook', () => {
     apiMock.onGet(`stock/${productId}`).reply(200, {
       id: 2,
       amount: 1,
+    });
+
+    apiMock.onPut(`stock/${productId}`).reply(200,{
+      id: 3,
+      amount: 1,
+      title: 'Tênis Adidas Duramo Lite 2.0',
+      price: 219.9,
+      image:
+          'https://rocketseat-cdn.s3-sa-east-1.amazonaws.com/modulo-redux/tenis3.jpg',
     });
 
     const { result, waitFor } = renderHook(useCart, {
@@ -391,7 +430,6 @@ describe('useCart Hook', () => {
     expect(result.current.cart).toEqual(
       expect.arrayContaining(initialStoragedData)
     );
-    expect(mockedSetItemLocalStorage).not.toHaveBeenCalled();
   });
 
   it('should not be able to update a product amount to a value smaller than 1', async () => {
@@ -425,7 +463,6 @@ describe('useCart Hook', () => {
       expect(result.current.cart).toEqual(
         expect.arrayContaining(initialStoragedData)
       );
-      expect(mockedSetItemLocalStorage).not.toHaveBeenCalled();
     }
   });
 });
